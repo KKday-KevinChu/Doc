@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<!-- saved from url=(0044)https://a.amnet.tw/tracking/srv.html?3.13.35 -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=Big5">
+    <script src="./json2.js"></script>
+    <script src="./md5.min.js"></script>
+    <script src="./client.min.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+
+if(typeof(console) == "undefined"){
+	console= {};
+	console[ "log" ] = function(){};
+}
+
+var RETUID_COOKIE = "__retuid";
+var FPED_COOKIE = "__fpid";
+var ft = 'f';
+var CK_PREFIX_RETFSESS = "__retfs-";
+var CK_PREFIX_SITE_MEMBER = "siteMember-";
+
+var CRX_RETUID_RETFSESS = "retuid-and-retfs";
+var CRX_RETFSESS = "retfs";
+var CRX_MEMBER_ID = "siteMember";
+
+var CRX_ACTION_READ = "read-action";
+var CRX_ACTION_WRITE = "write-action";
+
+var TIME_TO_LIVE = 30;	// minute as unit
+var DEFAULT_SECOND_DOMAIN = ".amnet.tw";
+var theSecondDomain = null;
+
+var RET={};
+RET.cookieObj = new function(){
+
+	return{
+		getCookie : function(name){
+			var nameEQ = name + "=";
+			var ca = document.cookie.split(';');
+			for ( var i = 0; i < ca.length; i++) {
+				var c = ca[i];
+				c = c.trim();
+				if (c.indexOf(nameEQ) == 0)
+					return c.substring(nameEQ.length);
+			}
+			return '';
+		},
+
+		generateRETUid : function(){
+			var s4 = function(){ return Math.floor(Math.random() * 0x10000 /* 65536 */).toString(16); };
+			return (s4() + s4() + "-" + s4() + "-" + s4() + "-" + s4() + "-" + s4() + s4() + s4());
+		},
+
+		generateFpid : function() {
+			var bar = '-';
+			var client = new ClientJS();
+			var userAgent = client.getUserAgent();
+			var screenPrint = client.getScreenPrint();
+			var pluginList = client.getPlugins();
+			var fontList = client.getFonts();
+			var localStorage = client.isLocalStorage();
+			var sessionStorage = client.isSessionStorage();
+			var timeZone = client.getTimeZone();
+			var language = client.getLanguage();
+			var systemLanguage = client.getSystemLanguage();
+			var cookies = client.isCookie();
+			var canvasPrint = client.getCanvasPrint();
+			var key = 'RET' + '-' + userAgent + bar + screenPrint + bar + pluginList + bar + fontList + bar + localStorage + bar + sessionStorage + bar +
+			timeZone + bar + language + bar + systemLanguage + bar + cookies + bar + canvasPrint;
+			var md5id = md5(key);
+			console.log(md5id);
+			return md5id;
+		},
+
+		generateFSessId : function(){
+			var s4 = function(){ return Math.floor(Math.random() * 0x10000 /* 65536 */).toString(16); };
+			return ( "fSes" + "-" + s4() + s4() + "-" + s4() + "-" + s4() + "-" + s4() );
+		},
+
+		setCookie : function(name, value, days) {
+			if (days) {
+				var date = new Date();
+				date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+				var expires = "; expires=" + date.toGMTString();
+			} else {
+				var expires = "";
+			}
+				document.cookie = name + "=" + value + expires + "; path=/; domain=" + theSecondDomain;
+				document.cookie = name + "=" + value + expires + "; path=/; domain=" + theSecondDomain + "; SameSite=None; Secure";
+		},
+
+		setCookieWithMin : function(name, value, minute) {
+			if (minute) {
+				var date = new Date();
+				date.setTime(date.getTime() + (minute * 60 * 1000));
+				var expires = "; expires=" + date.toGMTString();
+			} else{
+				var expires = "";
+			}
+			document.cookie = name + "=" + value + expires + "; path=/; domain=" + theSecondDomain;
+			document.cookie = name + "=" + value + expires + "; path=/; domain=" + theSecondDomain + "; SameSite=None; Secure";
+		},
+
+		uniformGeneratedId: function(inputId){
+			if(inputId == null || inputId ==undefined || inputId.length == 0){
+				return inputId;
+			}
+			var regExp = /[^\w-]+/g;
+			var idx = inputId.search(regExp);
+			if(idx < 0){
+				return inputId;
+			}
+			var resId = inputId;
+            if(idx < 10){
+                resId = inputId.replace(regExp, "");
+            }else{
+                resId = inputId.substring(0, idx);
+			}
+			return resId;
+		},
+
+		isIpFormat: function(host) {
+			if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(host)) {
+                return true;
+			}
+            return false;
+		},		
+		
+		getSecondLevelDomain: function() {
+			// this is .retchat.com  instead of r.retchat.com or a.retchat.com....
+				
+			var self = this;
+			var host = location.host;
+			if(host == undefined || host == null || host.length == 0){
+				host = location.hostname;
+				if(host == undefined || host == null || host.length == 0){
+					console.log("the host is null.");
+					return DEFAULT_SECOND_DOMAIN;
+				}
+			}
+			if(self.isIpFormat(host)){
+				console.log("the host is ip format. host: " + host);
+				return DEFAULT_SECOND_DOMAIN;
+			}
+			if(host.indexOf(".") > 0){
+				// can't start with "."
+				host = host.substring(host.indexOf("."), host.length);
+			}else{
+				return DEFAULT_SECOND_DOMAIN;
+			}
+			return host;
+		}
+	};
+};
+
+var getCrxDomainRETUid = function(){
+	// set the second level domain
+	theSecondDomain = RET.cookieObj.getSecondLevelDomain();
+
+	//allowed domains
+	var whitelist = ["foo.example.com", "www.example.com"];
+
+	function verifyOrigin(origin){
+		var domain = origin.replace(/^https?:\/\/|:\d{1,4}$/g, "").toLowerCase();
+		var i = 0;
+		var len = whitelist.length;
+
+		while(i < len){
+			if (whitelist[i] == domain){
+				return true;
+			}
+			i++;
+		}
+		return false;
+	}
+
+
+	/**
+	 * &#65533;&#32366;&#65533;&#65533;&#137047;&#65533;&#143817;&#65533;&#65533;&#65533;&#31916;etUid嚗&#65533;&#65533;&#65533;&#65533;&#163875;&#160486;&#65533;&#160848;瘝⊥&#65533;&#32463;etUid&#65533;&#65533;&#21976;&#65533;&#135286;&#65533;&#65533;&#65533;&#31916;etUid嚗&#65533;僎霈曄蔭cookie嚗&#65533;&#65533;&#166371;ocalStorage
+	*/
+	function getRetUid(){
+		var retUid = RET.cookieObj.getCookie( RETUID_COOKIE );
+		if (retUid == null || retUid.trim() == ""){
+			try {
+			    retUid = localStorage.getItem(RETUID_COOKIE);
+			} catch (e) {
+				console.log("srv.html: localstorage not supported");
+			}
+		}
+		console.log("srv.html: Get local cookie in " + retUid);
+		if (retUid == null || retUid.trim() == "") {
+			retUid = RET.cookieObj.generateRETUid();
+			ft = 't'
+			console.log("srv.html: Create local cookie in " + retUid);
+		}
+		retUid = RET.cookieObj.uniformGeneratedId(retUid);
+
+		RET.cookieObj.setCookie(RETUID_COOKIE, retUid, 365/*one year*/);
+		try {
+			localStorage.setItem(RETUID_COOKIE, retUid);
+		} catch (e) {
+			Storage.prototype._setItem = Storage.prototype.setItem;
+			Storage.prototype.setItem = function() {};
+		}
+
+		return retUid;
+	}
+
+	function getFpid(){
+		var fpid = RET.cookieObj.getCookie( FPED_COOKIE );
+		if (fpid == null || fpid.trim() == ""){
+			try {
+				fpid = localStorage.getItem(FPED_COOKIE);
+			} catch (e) {
+				console.log("srv.html: localstorage not supported");
+			}
+		}
+		console.log("srv.html: Get local cookie in " + fpid);
+		if (fpid == null || fpid.trim() == "") {
+			fpid = RET.cookieObj.generateFpid();
+			// ft = 't'
+			console.log("srv.html: Create local cookie in " + fpid);
+		}
+
+		RET.cookieObj.setCookie(FPED_COOKIE, fpid, 365/*one year*/);
+		try {
+			localStorage.setItem(FPED_COOKIE, fpid);
+		} catch (e) {
+			Storage.prototype._setItem = Storage.prototype.setItem;
+			Storage.prototype.setItem = function() {};
+		}
+
+		return fpid;
+	}
+
+	/**
+	 * 霈曄蔭sessionId 摰&#65533;&#65533;&#65533;key&#65533;潔蛹靘&#35265;&#65533;__retfs-20
+	 * 擐&#137047;活蝔&#35265;&#65533;&#150138;&#65533;銵&#65533;僎瘝⊥&#65533;&#21287;&#65533;潔&#65533;&#135286;&#65533;&#65533;&#65533;&#143543;&#65533;銝芸&#65533;澆僎撠&#65533;&#65533;嗅&#65533;&#30531;&#65533;剁&#65533;&#23765;&#160900;&#65533;&#137407;銝&#65533;30&#65533;&#65533;&#65533;&#65533;&#65533;
+	*/
+	function getSessionId( retSiteId ){
+		//siteid is embeded inside session cookie name eg: __retfs-20
+		var ckName = CK_PREFIX_RETFSESS + retSiteId;
+		var ckValue = RET.cookieObj.getCookie( ckName );
+		if( ckValue==null || ckValue.length==0 ){
+			ckValue = RET.cookieObj.generateFSessId();
+			RET.cookieObj.setCookieWithMin( ckName, ckValue, TIME_TO_LIVE );
+		}
+		ckValue = RET.cookieObj.uniformGeneratedId(ckValue);
+		return ckValue;
+	}
+
+	function setSessionId( retSiteId, sessionId ){
+		var ckName = CK_PREFIX_RETFSESS + retSiteId;
+		ckValue = RET.cookieObj.uniformGeneratedId(sessionId);
+		RET.cookieObj.setCookieWithMin( ckName, ckValue, TIME_TO_LIVE );
+	}
+
+	function handleReadAction( data ){
+		var queryKey = data.key;
+		if( queryKey.indexOf( CRX_RETUID_RETFSESS ) >= 0 ){
+			var retSiteId = queryKey.split("::")[1]; // &#65533;&#32366;&#65533;&#65533;&#39471;iteId
+			var retUid = getRetUid();
+			var sessionId = getSessionId( retSiteId );
+			var fpid = getFpid()
+			var value = JSON.stringify( {"retUid":retUid, "sessionId":sessionId, "fpid": fpid, ft: ft} );
+			return value;
+		}
+	}
+
+
+
+	/** arguments eg:
+	 *  {	key: 'retfs::20',action : CRX_ACTION_WRITE,value : sessionId,id: 2}
+	 *  or
+	 *  {key: "siteMember::2584", action: "write-action", value: "amy", id: 4}
+	*/
+	function handleWriteAction( data ){
+		/* maybe write siteMember in icem domain 霈曄蔭隞&#156824;蜓&#65533;&#65533;&#65533;&#22153;&#65533;&#65533;&#65533;&#65533;siteMember 撟嗉挽蝵宮ookie*/
+		var queryKey = data.key;
+		if( queryKey.indexOf( CRX_MEMBER_ID ) >= 0 ){
+			var retSiteId = queryKey.split("::")[1];
+			var memberId = data.value;
+			var ckName = CK_PREFIX_SITE_MEMBER + retSiteId;
+			RET.cookieObj.setCookie(ckName, memberId, 365/*one year*/);
+		}
+		else if( queryKey.indexOf( CRX_RETFSESS ) >= 0 ){
+			var retSiteId = queryKey.split("::")[1];
+			var sessionId = data.value;
+			setSessionId( retSiteId, sessionId );
+		}
+	}
+
+
+	/**
+	 *  {key: "retuid-and-retfs::20",action: "read-action",id: 1} 
+	 * 	or 
+	 * 	{key: "siteMember::2584", action: "write-action", value: "amy", id: 4}
+	*/
+	function handleRequest(event){
+		if (true/*verifyOrigin(event.origin)*/){
+			var data = null;
+			try{
+				data = JSON.parse(event.data);
+			}catch(e) {
+				console.log( "illegal format" );
+			}
+			if( data==null || data.key==null ){
+				return;
+			}
+
+			if( data.action == CRX_ACTION_READ ){
+				var ckValue = handleReadAction( data ); //{"retUid":retUid, "sessionId":sessionId}
+				event.source.postMessage(JSON.stringify({"id": data.id, "key":data.key, "value": ckValue}), event.origin);// &#65533;&#65533;&#148595;&#65533;憿菟&#140464;&#65533;&#65533;&#29054;&#65533;&#65533;瘨&#65533;&#65533;&#65533;
+			}
+			else if( data.action == CRX_ACTION_WRITE ){
+				handleWriteAction( data );
+				// why there is a need of postMessage ???  &#65533;&#65533;&#149825;捂&#65533;&#31955;銝箔&#65533;&#65533;&#65533;&#146631;&#33156;m_requests銝剔&#65533;餈&#21976;&#65533;憿雹equest&#65533;&#65533;&#31508;&#65533;&#22546;&#65533;&#65533;摰&#65533;
+				event.source.postMessage(JSON.stringify({"id": data.id, "key":data.key, "value": ""}), event.origin);
+			}
+
+		}
+	}
+
+	if(window.addEventListener){
+		window.addEventListener("message", handleRequest, false);
+	} else if (window.attachEvent){
+		window.attachEvent("onmessage", handleRequest);
+	}
+};
+
+(function(){
+	try{
+		if (!String.prototype.trim) {
+			String.prototype.trim = function() {
+				return this.replace(/^\s+|\s+$/g, '');
+			};
+		}
+		getCrxDomainRETUid();
+	}catch(err){}
+})();
+
+</script>
+
+
+</body></html>

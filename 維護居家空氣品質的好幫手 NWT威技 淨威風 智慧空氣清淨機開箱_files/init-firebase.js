@@ -1,0 +1,1 @@
+var firebaseConfig={apiKey:"AIzaSyDWWv-Gx6ujb16ZmZdXhZocFviejEuMXr4",authDomain:"web-project-8cdaf.firebaseapp.com",databaseURL:"https://web-project-8cdaf.firebaseio.com",projectId:"web-project-8cdaf",storageBucket:"web-project-8cdaf.appspot.com",messagingSenderId:"766459420534",appId:"1:766459420534:web:8242dffe29e9255e302457"};firebase.initializeApp(firebaseConfig);

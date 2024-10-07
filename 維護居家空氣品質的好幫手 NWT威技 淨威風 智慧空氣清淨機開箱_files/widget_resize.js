@@ -1,0 +1,2 @@
+window.onload=function(){$('article iframe').each(function(){var reg=/https:\/\/www\.mobile01\.com\/widget\.htm([^>]*)/g
+var matches=reg.exec($(this).attr('src'));if(matches){$(this).addClass('widget');$(this).attr('scrolling','no');}});setTimeout(function(){var widgets_count=$('.widget').length;for(var i=0;i<widgets_count;i++){var x=document.getElementsByClassName('widget')[i].contentWindow.return_height();x=parseInt(x)+10;document.getElementsByClassName('widget')[i].style.height=x+'px';}},3000);}
