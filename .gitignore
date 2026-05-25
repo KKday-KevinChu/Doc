@@ -1,0 +1,6 @@
+# 存檔網頁 (browser "Save As")
+*_files/
+*.DS_Store
+
+# 避免 API key 洩漏
+*.html
