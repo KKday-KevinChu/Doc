@@ -1,0 +1,17 @@
+/* lite youtube shorts css */
+lite-youtube {
+    --yt-ratio: 16/9;
+    aspect-ratio: var(--yt-ratio);
+    height: auto !important;
+}
+
+lite-youtube::after {
+    content: none !important;
+}
+
+lite-youtube[yt-short] {
+    --yt-ratio: 9/16;
+    background-size: cover !important;
+    background-position: center center !important;
+    border-radius: 8px;
+}
