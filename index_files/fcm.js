@@ -139,24 +139,27 @@ function requestPermission() {
 }
 
 function FCM() {
-    messaging.getToken().then(function(currentToken) {
-        if (currentToken) {
-            sendTokenToServer(currentToken);
-        } else {
+    navigator.serviceWorker.ready.then(function(registration) {
+        messaging.getToken({ serviceWorkerRegistration: registration }).then(function(currentToken) {
+            if (currentToken) {
+                sendTokenToServer(currentToken);
+            } else {
+                setTokenSentToServer(false);
+            }
+        }).catch(function(err) {
             setTokenSentToServer(false);
-        }
-    }).catch(function(err) {
-        setTokenSentToServer(false);
+        });
     });
 }
 
 function tokenRefresh() {
     messaging.onTokenRefresh(function() {
-        messaging.getToken().then(function(refreshedToken) {
-            setTokenSentToServer(false);
-
-            sendTokenToServer(refreshedToken);
-        }).catch(function(err) {
+        navigator.serviceWorker.ready.then(function(registration) {
+            messaging.getToken({ serviceWorkerRegistration: registration }).then(function(refreshedToken) {
+                setTokenSentToServer(false);
+                sendTokenToServer(refreshedToken);
+            }).catch(function(err) {
+            });
         });
     });
 }
